@@ -80,10 +80,11 @@ enum MemAction {
 
 #[derive(Subcommand)]
 enum ConfigAction {
-    /// 显示当前配置
+    /// 显示当前配置 (.wslconfig 和 wsl.conf)
     Show,
 
-    /// 设置配置项 (如: memory 4GB, processors 2)
+    /// 设置 .wslconfig 配置项 (全局)
+    /// 示例: memory 4GB, networkingMode mirrored, autoProxy true
     Set {
         /// 配置项名称
         key: String,
@@ -91,8 +92,20 @@ enum ConfigAction {
         value: String,
     },
 
-    /// 用编辑器打开配置文件
+    /// 设置 wsl.conf 配置项 (发行版，需要 root)
+    /// 示例: systemd true, hostname mywsl
+    SetConf {
+        /// 配置项名称
+        key: String,
+        /// 配置值
+        value: String,
+    },
+
+    /// 用编辑器打开 .wslconfig
     Edit,
+
+    /// 用编辑器打开 wsl.conf (需要 root)
+    EditConf,
 }
 
 fn main() {
@@ -114,7 +127,9 @@ fn main() {
         Commands::Config { action } => match action {
             ConfigAction::Show => config::show(),
             ConfigAction::Set { key, value } => config::set(&key, &value),
+            ConfigAction::SetConf { key, value } => config::set_conf(&key, &value),
             ConfigAction::Edit => config::edit(),
+            ConfigAction::EditConf => config::edit_conf(),
         },
         Commands::Init { template } => cli::init::run(template.as_deref()),
     };
