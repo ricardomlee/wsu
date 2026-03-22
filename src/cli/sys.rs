@@ -2,6 +2,14 @@ use crate::error::Result;
 use crate::interop::wsl;
 use serde::Serialize;
 use std::fs;
+use unicode_width::UnicodeWidthStr;
+
+/// 按显示宽度填充空格（中文字符占2个宽度）
+fn pad_width(s: &str, width: usize) -> String {
+    let display_width = UnicodeWidthStr::width(s);
+    let padding = width.saturating_sub(display_width);
+    format!("{}{}", s, " ".repeat(padding))
+}
 
 #[derive(Serialize)]
 struct SystemInfo {
@@ -92,13 +100,14 @@ pub fn run(json: bool) -> Result<()> {
     if json {
         println!("{}", serde_json::to_string_pretty(&info)?);
     } else {
+        // 表格宽度 38 字符
         println!("\x1b[1;36m╔══════════════════════════════════════╗\x1b[0m");
         println!("\x1b[1;36m║\x1b[0m      \x1b[1;33mWSL2 系统信息\x1b[0m                  \x1b[1;36m║\x1b[0m");
         println!("\x1b[1;36m╠══════════════════════════════════════╣\x1b[0m");
-        println!("\x1b[1;36m║\x1b[0m \x1b[32mWSL 版本:\x1b[0m     {:<21} \x1b[1;36m║\x1b[0m", info.wsl_version);
-        println!("\x1b[1;36m║\x1b[0m \x1b[32m内核版本:\x1b[0m     {:<21} \x1b[1;36m║\x1b[0m", info.kernel_version);
-        println!("\x1b[1;36m║\x1b[0m \x1b[32mWindows IP:\x1b[0m   {:<21} \x1b[1;36m║\x1b[0m", info.host_ip);
-        println!("\x1b[1;36m║\x1b[0m \x1b[32m发行版:\x1b[0m       {:<21} \x1b[1;36m║\x1b[0m", info.distro);
+        println!("\x1b[1;36m║\x1b[0m \x1b[32mWSL 版本:\x1b[0m  {} \x1b[1;36m║\x1b[0m", pad_width(&info.wsl_version, 26));
+        println!("\x1b[1;36m║\x1b[0m \x1b[32m内核版本:\x1b[0m  {} \x1b[1;36m║\x1b[0m", pad_width(&info.kernel_version, 26));
+        println!("\x1b[1;36m║\x1b[0m \x1b[32mWindows IP:\x1b[0m{} \x1b[1;36m║\x1b[0m", pad_width(&info.host_ip, 26));
+        println!("\x1b[1;36m║\x1b[0m \x1b[32m发行版:\x1b[0m    {} \x1b[1;36m║\x1b[0m", pad_width(&info.distro, 26));
         println!("\x1b[1;36m╠══════════════════════════════════════╣\x1b[0m");
         println!("\x1b[1;36m║\x1b[0m \x1b[33m内存使用:\x1b[0m                            \x1b[1;36m║\x1b[0m");
         println!("\x1b[1;36m║\x1b[0m   总计: {:>6} MB                  \x1b[1;36m║\x1b[0m", info.mem_total_mb);
