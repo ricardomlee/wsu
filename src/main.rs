@@ -3,7 +3,7 @@ mod error;
 mod interop;
 
 use clap::{Parser, Subcommand};
-use cli::{mem, proxy, sys};
+use cli::{config, mem, proxy, sys};
 
 /// WSL2 智能工具箱
 #[derive(Parser)]
@@ -25,6 +25,12 @@ enum Commands {
     Mem {
         #[command(subcommand)]
         action: MemAction,
+    },
+
+    /// WSL 配置管理 - 读写 .wslconfig
+    Config {
+        #[command(subcommand)]
+        action: ConfigAction,
     },
 
     /// 开发环境快速初始化
@@ -72,6 +78,23 @@ enum MemAction {
     Reclaim,
 }
 
+#[derive(Subcommand)]
+enum ConfigAction {
+    /// 显示当前配置
+    Show,
+
+    /// 设置配置项 (如: memory 4GB, processors 2)
+    Set {
+        /// 配置项名称
+        key: String,
+        /// 配置值
+        value: String,
+    },
+
+    /// 用编辑器打开配置文件
+    Edit,
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -87,6 +110,11 @@ fn main() {
         Commands::Mem { action } => match action {
             MemAction::Status => mem::status(),
             MemAction::Reclaim => mem::reclaim(),
+        },
+        Commands::Config { action } => match action {
+            ConfigAction::Show => config::show(),
+            ConfigAction::Set { key, value } => config::set(&key, &value),
+            ConfigAction::Edit => config::edit(),
         },
         Commands::Init { template } => cli::init::run(template.as_deref()),
     };
